@@ -131,6 +131,10 @@ PS C:\Users\JunhoYeo\Documents\GitHub\monorial>
 
 결국 오차역전파법을 써야 하나 보다...
 
+https://stackoverflow.com/questions/36061994/sklearn-cross-validation-raises-indexerror-arrays-used-as-indices-must-be-of-in
+
+구현 중에 `-np.sum(np.log(y[np.arange(batch_size), t])) / batch_size`에서 `IndexError: arrays used as indices must be of integer (or boolean) type`라며 에러가 나길래 위 글 참고, `.astype('int64')`를 붙여서 `-np.sum(np.log(y[np.arange(batch_size), t.astype('int64')])) / batch_size` 이렇게 수정했더니 정상적으로 작동했다.
+
 책 예제코드 써서 일단 3층짜리 신경망에 적용해뒀다.
 
 일단 커밋하고 나머지는 학교 컴실에서 해야지
