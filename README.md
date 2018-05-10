@@ -210,7 +210,7 @@ MAX 26의 각각의 타일 자리마다 들어갈 수 있는 26개의 타일에 
 
 즉 이렇게 형상을 설계하는 것이 가능할 것이다.
 
-~~ 그럼 구현하러 가 볼까? ~~ 
+~~그럼 구현하러 가 볼까?~~ 
 
 ```Python
 PS C:\Users\JunhoYeo\Documents\GitHub\monorial> python .\net.py
