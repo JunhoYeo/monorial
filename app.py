@@ -2,186 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # 1. neural network (초기 가중치는 랜덤으로 적절히 조절)
-import sys
-import collections
-import numpy as np
-
-# sys.setrecursionlimit(10000) # 최대 재귀 깊이 설정
-
-def sigmoid(x): # sigmoid(시그모이드) 함수 : 은닉층에서 사용하는 활성화 함수
-    return 1 / (1 + np.exp(-x))
-
-def softmax(a): # softmax(소프트맥스) 함수 : 출력층에서 사용하는 활성화 함수
-    c = np.max(a)
-    exp_a = np.exp(a - c)
-    return exp_a / np.sum(exp_a)
-
-def cross_entropy_error(y, t): # 교차 엔트로피 오차 함수 : 손실 함수로 사용
-    # 배치 데이터 처리를 하게 될 수도 있으므로 모두를 처리할 수 있도록 구현된 코드를 사용
-    if y.ndim == 1:
-        t = t.reshape(1, t.size)
-        y = y.reshape(1, y.size)
-    batch_size = y.shape[0]
-    return -np.sum(np.log(y[np.arange(batch_size), t.astype('int64')])) / batch_size
-    '''
-    >>> t = [0, 0, 1]
-    >>> y = [0.5, 0.5]
-    >>> cross_entropy_error(np.array(y), np.array(t))
-    2.0794415416798357
-    '''
-    # 위와 같이 테스트한 결과 정상적으로 작동함
-
-class Relu:
-    def __init__(self):
-        self.mask = None
-
-    def forward(self, x):
-        self.mask = (x <= 0)
-        out = x.copy()
-        out[self.mask] = 0
-        return out
-
-    def backward(self, dout):
-        dout[self.mask] = 0
-        dx = dout
-        return dx
-
-class Affine:
-    def __init__(self, W, b):
-        self.W = W
-        self.b = b
-        self.x = None
-        self.original_x_shape = None
-        # 가중치와 편향 매개변수의 미분
-        self.dW = None
-        self.db = None
-
-    def forward(self, x):
-        # 텐서 대응
-        self.original_x_shape = x.shape
-        x = x.reshape(x.shape[0], -1)
-        self.x = x
-        out = np.dot(self.x, self.W) + self.b
-        return out
-
-    def backward(self, dout):
-        dx = np.dot(dout, self.W.T)
-        self.dW = np.dot(self.x.T, dout)
-        self.db = np.sum(dout, axis=0)
-        dx = dx.reshape(*self.original_x_shape)  # 입력 데이터 모양 변경(텐서 대응)
-        return dx
-
-class SoftmaxWithLoss:
-    def __init__(self):
-        self.loss = None # 손실함수
-        self.y = None    # softmax의 출력
-        self.t = None    # 정답 레이블(원-핫 인코딩 형태)
-        
-    def forward(self, x, t):
-        self.t = t
-        self.y = softmax(x)
-        self.loss = cross_entropy_error(self.y, self.t)
-        return self.loss
-
-    def backward(self, dout=1):
-        batch_size = self.t.shape[0]
-        if self.t.size == self.y.size: # 정답 레이블이 원-핫 인코딩 형태일 때
-            dx = (self.y - self.t) / batch_size
-        else:
-            dx = self.y.copy()
-            dx[np.arange(batch_size), self.t] -= 1
-            dx = dx / batch_size
-        return dx
-
-class Network:
-    # input_size : 입력층의 뉴런 수 (제 1층)
-    # hidden_size : 은닉층의 뉴런 수
-        # hidden_size[0] : 첫 번째 은닉층의 뉴런 수 (제 2층)
-        # hidden_size[1] : 두 번째 은닉층의 뉴런 수 (제 3층)
-    # output_size : 출력층의 뉴런 수
-    def __init__(self, input_size, hidden_size, output_size):
-        weight_init_std = 0.01
-        self.params = {}
-        self.params['w1'] = weight_init_std * np.random.randn(input_size, hidden_size[0])
-        self.params['b1'] = np.zeros(hidden_size[0])
-        self.params['w2'] = weight_init_std * np.random.randn(hidden_size[0], hidden_size[1])
-        self.params['b2'] = np.zeros(hidden_size[1])
-        self.params['w3'] = weight_init_std * np.random.randn(hidden_size[1], output_size)
-        self.params['b3'] = np.zeros(output_size)
-        # 계층 생성
-        self.layers = collections.OrderedDict()
-        self.layers['Affine1'] = Affine(self.params['w1'], self.params['b1'])
-        self.layers['Relu1'] = Relu()
-        self.layers['Affine2'] = Affine(self.params['w2'], self.params['b2'])
-        self.layers['Relu2'] = Relu()
-        self.layers['Affine3'] = Affine(self.params['w3'], self.params['b3'])
-        self.lastLayer = SoftmaxWithLoss()
-    
-    # def predict(self, x):
-    #     w1, w2, w3 = self.params['w1'], self.params['w2'], self.params['w3']
-    #     b1, b2, b3 = self.params['b1'], self.params['b2'], self.params['b3']
-    #     # 1층 
-    #     a1 = np.dot(x, w1) + b1
-    #     z1 = sigmoid(a1)
-    #     # 2층
-    #     a2 = np.dot(z1, w2) + b2 
-    #     z2 = sigmoid(a2)
-    #     # 3층
-    #     a3 = np.dot(z2, w3) + b3
-    #     y = softmax(a3)
-    #     return y
-    def predict(self, x):
-        for layer in self.layers.values():
-            x = layer.forward(x)
-        return x
-
-    # def loss(self, x, t):
-    #     y = self.predict(x)
-    #     return cross_entropy_error(y, t)
-    def loss(self, x, t):
-        y = self.predict(x)
-        return self.lastLayer.forward(y, t)
-
-    # def accuracy(self, x, t):
-    #     y = self.predict(x)
-    #     y = np.argmax(y, axis=1)
-    #     t = np.argmax(t, axis=1)
-    #     return np.sum(y == t) / float(x.shape[0])
-    def accuracy(self, x, t):
-        y = self.predict(x)
-        y = np.argmax(y, axis=1)
-        if t.ndim != 1 : 
-            t = np.argmax(t, axis=1)
-        accuracy = np.sum(y == t) / float(x.shape[0])
-        return accuracy
-
-    # def numerical_gradient(self, x, t):
-    #     loss_W = lambda W: self.loss(x, t)
-    #     grads = {}
-    #     grads['w1'] = self.numerical_gradient(loss_W, self.params['w1'])
-    #     grads['b1'] = self.numerical_gradient(loss_W, self.params['b1'])
-    #     grads['w2'] = self.numerical_gradient(loss_W, self.params['w2'])
-    #     grads['b2'] = self.numerical_gradient(loss_W, self.params['b2'])
-    #     grads['w3'] = self.numerical_gradient(loss_W, self.params['w3'])
-    #     grads['b3'] = self.numerical_gradient(loss_W, self.params['b3'])
-    #     return grads
-
-    def gradient(self, x, t):
-        # forward
-        self.loss(x, t)
-        # backward
-        dout = 1
-        dout = self.lastLayer.backward(dout)
-        layers = list(self.layers.values())
-        layers.reverse()
-        for layer in layers:
-            dout = layer.backward(dout)
-        # 결과 저장
-        grads = {}
-        grads['w1'], grads['b1'] = self.layers['Affine1'].dW, self.layers['Affine1'].db
-        grads['w2'], grads['b2'] = self.layers['Affine2'].dW, self.layers['Affine2'].db
-        grads['w3'], grads['b3'] = self.layers['Affine3'].dW, self.layers['Affine3'].db
-        return grads
+from net import *
+from game import *
 
 if __name__ == '__main__':
     net = Network(26, [50, 100], 26)
@@ -195,10 +17,90 @@ if __name__ == '__main__':
     print('w3 shape : ' + str(net.params['w3'].shape))
     print('L b3 shape : ' + str(net.params['b3'].shape))
 
+	# 현재 게임판의 타일 상태를 입력으로 받음
+	# 배열의 인덱스 : 흰 타일(0~11 + 조커) + 검은 타일(0~11 + 조커) => 26개 원소(인덱스 0~25)
+	# 0 : 흰 타일 0
+	# 1 : 흰 타일 1
+	# 2 : 흰 타일 2
+	# 3 : 흰 타일 3
+	# 4 : 흰 타일 4
+	# 5 : 흰 타일 5
+	# 6 : 흰 타일 6
+	# 7 : 흰 타일 7
+	# 8 : 흰 타일 8
+	# 9 : 흰 타일 9
+	# 10 : 흰 타일 10
+	# 11 : 흰 타일 11
+	# 12 : 흰 조커
+	# 13 : 검은 타일 0
+	# 14 : 검은 타일 1
+	# 15 : 검은 타일 2
+	# 16 : 검은 타일 3
+	# 17 : 검은 타일 4
+	# 18 : 검은 타일 5
+	# 19 : 검은 타일 6
+	# 20 : 검은 타일 7
+	# 21 : 검은 타일 8
+	# 22 : 검은 타일 9
+	# 23 : 검은 타일 10
+	# 24 : 검은 타일 11
+	# 25 : 검은 조커
     # x = np.array([[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]])
     # print(x)
     # y = net.predict(x)
     # print(y)
+	
+    # x_train = (학습) 입력 데이터
+    # t_train = (학습) 정답 
+
+    # iters_num = 10000  # 반복 횟수를 적절히 설정한다.
+    # train_size = x_train.shape[0]
+    # batch_size = 100   # 미니배치 크기
+    # learning_rate = 0.1
+
+    # train_loss_list = []
+    # train_acc_list = []
+    # # test_acc_list = []
+
+    # # 1에폭당 반복 수
+    # iter_per_epoch = max(train_size / batch_size, 1)
+
+    # for i in range(iters_num):
+    #     # 미니배치 획득
+    #     # batch_mask = np.random.choice(train_size, batch_size)
+    #     # x_batch = x_train[batch_mask]
+    #     # t_batch = t_train[batch_mask]
+
+    #     # 기울기 계산
+    #     #grad = network.numerical_gradient(x_batch, t_batch)
+    #     grad = network.gradient(x_batch, t_batch)
+
+    #     # 매개변수 갱신
+    #     for key in ('W1', 'b1', 'W2', 'b2'):
+    #         network.params[key] -= learning_rate * grad[key]
+
+    #     # 학습 경과 기록
+    #     loss = network.loss(x_batch, t_batch)
+    #     train_loss_list.append(loss)
+
+    #     # 1에폭당 정확도 계산
+    #     if i % iter_per_epoch == 0:
+    #         train_acc = network.accuracy(x_train, t_train)
+    #         test_acc = network.accuracy(x_test, t_test)
+    #         train_acc_list.append(train_acc)
+    #         test_acc_list.append(test_acc)
+    #         print("train acc, test acc | " + str(train_acc) + ", " + str(test_acc))
+
+	# # 그래프 그리기
+    # markers = {'train': 'o', 'test': 's'}
+    # x = np.arange(len(train_acc_list))
+    # plt.plot(x, train_acc_list, label='train acc')
+    # plt.plot(x, test_acc_list, label='test acc', linestyle='--')
+    # plt.xlabel("epochs")
+    # plt.ylabel("accuracy")
+    # plt.ylim(0, 1.0)
+    # plt.legend(loc='lower right')
+    # plt.show()
 
 # 2. input data, get output
 
