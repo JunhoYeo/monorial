@@ -251,7 +251,7 @@ self.lastLayer = SoftmaxWithLoss()
 # 모노리얼 vs 모노리얼
 다빈치코드 플레이 데이터가 없으니까 모노리얼 vs 모노리얼 대전을 통해 데이터를 얻으며 학습해야 함
 
-기획 및 메모는 Trello를 사용해서 해버림
+기획 및 메모는 Trello를 사용해서 해버림... 추후 문서화 예정
 
 ## Reference
 - https://namu.wiki/w/%EA%B8%B0%EA%B3%84%ED%95%99%EC%8A%B5

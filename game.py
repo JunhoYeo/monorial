@@ -51,9 +51,27 @@ class ai:
             print('joker : ' + str(joker))
         # self.tiles의 랜덤 위치에 처음에 따로 빼 둔 조커를 끼워 넣음
 
+    def printTile(self):
+        tiles = ''
+        for tile in self.tiles:
+            if tile == 12: # white joker 
+                tiles += str(['white', 'joker'])
+            elif tile == 25: # black joker
+                tiles += str(['black', 'joker'])
+            elif tile >= 13: # black tile
+                tiles += str(['black', tile - 13])
+            else: # white tile
+                tiles += str(['white', tile])
+            tiles += ' '
+        return tiles
+
 if __name__ == '__main__':
     game = newGame()
-    m1 = ai()
+    m1 = ai() # monorial 1
+    m2 = ai() # monorial 2
     m1.getTiles(game)
     m1.sortTiles()
-    print(m1.tiles)
+    m2.getTiles(game)
+    m2.sortTiles()
+    print('m1 : ' + m1.printTile())
+    print('m2 : ' + m2.printTile())
