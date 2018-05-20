@@ -5,17 +5,17 @@
 from net import *
 from game import *
 
-if __name__ == '__main__':
-    net = Network(26, [50, 100], 26)
-    # x = np.array([1.0, 0.5])
-    # y = network.predict(x)
-    # print(y)
-    print('w1 shape : ' + str(net.params['w1'].shape))
-    print('L b1 shape : ' + str(net.params['b1'].shape))
-    print('w2 shape : ' + str(net.params['w2'].shape))
-    print('L b2 shape : ' + str(net.params['b2'].shape))
-    print('w3 shape : ' + str(net.params['w3'].shape))
-    print('L b3 shape : ' + str(net.params['b3'].shape))
+# if __name__ == '__main__':
+#     net = Network(26, [50, 100], 26)
+#     # x = np.array([1.0, 0.5])
+#     # y = network.predict(x)
+#     # print(y)
+#     print('w1 shape : ' + str(net.params['w1'].shape))
+#     print('L b1 shape : ' + str(net.params['b1'].shape))
+#     print('w2 shape : ' + str(net.params['w2'].shape))
+#     print('L b2 shape : ' + str(net.params['b2'].shape))
+#     print('w3 shape : ' + str(net.params['w3'].shape))
+#     print('L b3 shape : ' + str(net.params['b3'].shape))
 
 	# 현재 게임판의 타일 상태를 입력으로 받음
 	# 배열의 인덱스 : 흰 타일(0~11 + 조커) + 검은 타일(0~11 + 조커) => 26개 원소(인덱스 0~25)
@@ -101,6 +101,49 @@ if __name__ == '__main__':
     # plt.ylim(0, 1.0)
     # plt.legend(loc='lower right')
     # plt.show()
+
+if __name__ == '__main__':
+    net = Network(26, [50, 200, 800], 676)
+    print('w1 shape : ' + str(net.params['w1'].shape))
+    print('L b1 shape : ' + str(net.params['b1'].shape))
+    print('w2 shape : ' + str(net.params['w2'].shape))
+    print('L b2 shape : ' + str(net.params['b2'].shape))
+    print('w3 shape : ' + str(net.params['w3'].shape))
+    print('L b3 shape : ' + str(net.params['b3'].shape))
+    print('w4 shape : ' + str(net.params['w4'].shape))
+    print('L b4 shape : ' + str(net.params['b4'].shape))
+    print('network ready\n')
+
+    game = newGame()
+    m1 = ai(1) # monorial 1
+    m2 = ai(2) # monorial 2
+
+    m1.getTiles(game)
+    m1.sortTiles(game)
+    m2.getTiles(game)
+    m2.sortTiles(game)
+    game.updateAll(m1, m2) # 패 다 뽑았으면 업데이트 
+    print('m1 : tiles\n' + m1.printTiles(game))
+    print('m2 : tiles\n' + m2.printTiles(game))
+
+    # ai에 turn 메소드가 있어서 자신 턴에 드로우 하고 하는 처리를 만들어도 좋을 것 같음 
+    print('m1 : draw')
+    m1.drawTiles(game)
+    game.updatePlayerTiles(1, m1) # 드로우 후 업데이트
+    print('m1 : tiles\n' + m1.printTiles(game))
+    print('m1 : view\n' + str(m1.getAiView(game)) + '\n') # m1가 보는 게임판 상황 가져오기 
+    
+    # 인공신경망에 input(test)
+    test_data = []
+    test_data.append(m1.tile_view)
+    x = np.array(test_data)
+    print(x)
+    y = net.predict(x)
+    print(y)
+    print(y.tolist()[0])
+
+    # output을 처리 후 행동
+    # 원래 정답을 구하고 한 100번?쯤 train
 
 # 2. input data, get output
 

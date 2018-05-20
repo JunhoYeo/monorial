@@ -154,13 +154,13 @@ class Network:
         grads['w4'], grads['b4'] = self.layers['Affine4'].dW, self.layers['Affine4'].db
         return grads
 
-if __name__ == '__main__':
-    net = Network(26, [50, 200, 800], 676)
-    print('w1 shape : ' + str(net.params['w1'].shape))
-    print('L b1 shape : ' + str(net.params['b1'].shape))
-    print('w2 shape : ' + str(net.params['w2'].shape))
-    print('L b2 shape : ' + str(net.params['b2'].shape))
-    print('w3 shape : ' + str(net.params['w3'].shape))
-    print('L b3 shape : ' + str(net.params['b3'].shape))
-    print('w4 shape : ' + str(net.params['w4'].shape))
-    print('L b4 shape : ' + str(net.params['b4'].shape))
+# if __name__ == '__main__':
+#     net = Network(26, [50, 200, 800], 676)
+#     print('w1 shape : ' + str(net.params['w1'].shape))
+#     print('L b1 shape : ' + str(net.params['b1'].shape))
+#     print('w2 shape : ' + str(net.params['w2'].shape))
+#     print('L b2 shape : ' + str(net.params['b2'].shape))
+#     print('w3 shape : ' + str(net.params['w3'].shape))
+#     print('L b3 shape : ' + str(net.params['b3'].shape))
+#     print('w4 shape : ' + str(net.params['w4'].shape))
+#     print('L b4 shape : ' + str(net.params['b4'].shape))
